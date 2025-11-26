@@ -1,0 +1,156 @@
+erDiagram
+    MEMBERS ||--o{ FITNESS_GOALS : "has"
+    MEMBERS ||--o{ HEALTH_METRICS : "logs"
+    MEMBERS ||--o{ PERSONAL_SESSIONS : "books"
+    MEMBERS ||--o{ CLASS_REGISTRATIONS : "registers"
+    MEMBERS ||--o{ INVOICES : "receives"
+    
+    TRAINERS ||--o{ TRAINER_AVAILABILITY : "defines"
+    TRAINERS ||--o{ PERSONAL_SESSIONS : "conducts"
+    TRAINERS ||--o{ CLASS_SESSIONS : "teaches"
+    
+    ADMINS ||--o{ EQUIPMENT_MAINTENANCE : "reports"
+    
+    ROOMS ||--o{ EQUIPMENT : "contains"
+    ROOMS ||--o{ PERSONAL_SESSIONS : "hosts"
+    ROOMS ||--o{ CLASS_SESSIONS : "hosts"
+    
+    EQUIPMENT ||--o{ EQUIPMENT_MAINTENANCE : "has"
+    
+    CLASSES ||--o{ CLASS_SESSIONS : "scheduled_as"
+    
+    CLASS_SESSIONS ||--o{ CLASS_REGISTRATIONS : "has"
+    
+    INVOICES ||--o{ INVOICE_ITEMS : "contains"
+    INVOICES ||--o{ PAYMENTS : "paid_by"
+    
+    MEMBERS {
+        int id PK
+        text email UK
+        text full_name
+        date date_of_birth
+        text gender
+        text phone
+        timestamptz created_at
+    }
+    
+    TRAINERS {
+        int id PK
+        text email UK
+        text full_name
+        text phone
+        text certification
+        timestamptz created_at
+    }
+    
+    ADMINS {
+        int id PK
+        text email UK
+        text full_name
+    }
+    
+    FITNESS_GOALS {
+        int id PK
+        int member_id FK
+        text goal_type
+        numeric target_value
+        text units
+        date start_date
+        date end_date
+        boolean active
+    }
+    
+    HEALTH_METRICS {
+        int id PK
+        int member_id FK
+        text metric_type
+        numeric metric_value
+        timestamptz recorded_at
+    }
+    
+    ROOMS {
+        int id PK
+        text name UK
+        int capacity
+    }
+    
+    EQUIPMENT {
+        int id PK
+        text name
+        int room_id FK
+        text status
+    }
+    
+    EQUIPMENT_MAINTENANCE {
+        int id PK
+        int equipment_id FK
+        int reported_by_admin FK
+        text issue_description
+        text status
+        timestamptz reported_at
+        timestamptz resolved_at
+    }
+    
+    TRAINER_AVAILABILITY {
+        int id PK
+        int trainer_id FK
+        tstzrange avail_range
+        text note
+    }
+    
+    PERSONAL_SESSIONS {
+        int id PK
+        int member_id FK
+        int trainer_id FK
+        int room_id FK
+        tstzrange session_range
+        text status
+        timestamptz created_at
+    }
+    
+    CLASSES {
+        int id PK
+        text name
+        text description
+        int default_capacity
+    }
+    
+    CLASS_SESSIONS {
+        int id PK
+        int class_id FK
+        int trainer_id FK
+        int room_id FK
+        tstzrange session_range
+        int capacity
+        text status
+    }
+    
+    CLASS_REGISTRATIONS {
+        int id PK
+        int class_session_id FK
+        int member_id FK
+        timestamptz registered_at
+    }
+    
+    INVOICES {
+        int id PK
+        int member_id FK
+        numeric total_amount
+        text status
+        timestamptz created_at
+    }
+    
+    INVOICE_ITEMS {
+        int id PK
+        int invoice_id FK
+        text description
+        numeric amount
+    }
+    
+    PAYMENTS {
+        int id PK
+        int invoice_id FK
+        numeric amount
+        text method
+        timestamptz paid_at
+    }
