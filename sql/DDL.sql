@@ -83,7 +83,7 @@ CREATE TABLE equipment_maintenance (
 CREATE TABLE trainer_availability (
     id SERIAL PRIMARY KEY,
     trainer_id INTEGER NOT NULL REFERENCES trainers(id) ON DELETE CASCADE,
-    avail_range TSRANGE NOT NULL,
+    avail_range TSTZRANGE NOT NULL,
     note TEXT
 );
 
@@ -93,7 +93,7 @@ CREATE TABLE personal_sessions (
     member_id INTEGER NOT NULL REFERENCES members(id) ON DELETE CASCADE,
     trainer_id INTEGER NOT NULL REFERENCES trainers(id) ON DELETE CASCADE,
     room_id INTEGER REFERENCES rooms(id),
-    session_range TSRANGE NOT NULL,
+    session_range TSTZRANGE NOT NULL,
     status TEXT NOT NULL DEFAULT 'scheduled',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
@@ -112,7 +112,7 @@ CREATE TABLE class_sessions (
     class_id INTEGER NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
     trainer_id INTEGER REFERENCES trainers(id),
     room_id INTEGER REFERENCES rooms(id),
-    session_range TSRANGE NOT NULL,
+    session_range TSTZRANGE NOT NULL,
     capacity INTEGER,
     status TEXT DEFAULT 'scheduled'
 );
