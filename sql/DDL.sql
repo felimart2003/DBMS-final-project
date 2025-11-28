@@ -1,6 +1,3 @@
--- DDL.sql
--- Schema for Health and Fitness Club Management System (PostgreSQL)
-
 -- Enable extension for exclusion constraints
 CREATE EXTENSION IF NOT EXISTS btree_gist;
 
@@ -32,7 +29,7 @@ CREATE TABLE admins (
     full_name TEXT NOT NULL
 );
 
--- Fitness goals (a member may have multiple goals over time)
+-- Fitness goals 
 CREATE TABLE fitness_goals (
     id SERIAL PRIMARY KEY,
     member_id INTEGER NOT NULL REFERENCES members(id) ON DELETE CASCADE,
@@ -44,7 +41,7 @@ CREATE TABLE fitness_goals (
     active BOOLEAN DEFAULT TRUE
 );
 
--- Health metrics logged historically (weight, heart rate, etc.)
+-- Health metrics logged w timestamp 
 CREATE TABLE health_metrics (
     id SERIAL PRIMARY KEY,
     member_id INTEGER NOT NULL REFERENCES members(id) ON DELETE CASCADE,
@@ -79,7 +76,7 @@ CREATE TABLE equipment_maintenance (
     resolved_at TIMESTAMP WITH TIME ZONE
 );
 
--- Trainers availability: use tstzrange to allow exclusion constraints for overlaps
+-- Trainers availability (tstzrange for exclusion constraints for overlaps)
 CREATE TABLE trainer_availability (
     id SERIAL PRIMARY KEY,
     trainer_id INTEGER NOT NULL REFERENCES trainers(id) ON DELETE CASCADE,
@@ -98,7 +95,7 @@ CREATE TABLE personal_sessions (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- Classes (types)
+-- Classes 
 CREATE TABLE classes (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
@@ -106,7 +103,7 @@ CREATE TABLE classes (
     default_capacity INTEGER DEFAULT 20
 );
 
--- Scheduled class sessions
+-- Class sessions
 CREATE TABLE class_sessions (
     id SERIAL PRIMARY KEY,
     class_id INTEGER NOT NULL REFERENCES classes(id) ON DELETE CASCADE,
@@ -117,7 +114,7 @@ CREATE TABLE class_sessions (
     status TEXT DEFAULT 'scheduled'
 );
 
--- Registrations for class sessions
+-- Class registrations
 CREATE TABLE class_registrations (
     id SERIAL PRIMARY KEY,
     class_session_id INTEGER NOT NULL REFERENCES class_sessions(id) ON DELETE CASCADE,
@@ -126,7 +123,7 @@ CREATE TABLE class_registrations (
     UNIQUE (class_session_id, member_id)
 );
 
--- Billing: invoices, items, payments (simulated)
+-- Invoices, items and payments
 CREATE TABLE invoices (
     id SERIAL PRIMARY KEY,
     member_id INTEGER NOT NULL REFERENCES members(id) ON DELETE CASCADE,
@@ -150,38 +147,39 @@ CREATE TABLE payments (
     paid_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- Indexes for performance
+-- Indexs for performance
 CREATE INDEX idx_members_email ON members(email);
 CREATE INDEX idx_health_metrics_member_time ON health_metrics(member_id, recorded_at DESC);
 
--- Exclusion constraints to prevent overlapping bookings for trainer and rooms
--- For personal_sessions: prevent overlapping sessions for same trainer or same room
+-- Exclusion constraints to stop conflicting bookings for trainer and rooms
 ALTER TABLE personal_sessions
     ADD CONSTRAINT personal_sessions_no_trainer_overlap EXCLUDE USING GIST (
         trainer_id WITH =,
         session_range WITH &&
     );
 
+-- Same trainer and same room conflict
 ALTER TABLE personal_sessions
     ADD CONSTRAINT personal_sessions_no_room_overlap EXCLUDE USING GIST (
         room_id WITH =,
         session_range WITH &&
     );
 
--- For class_sessions: prevent overlapping sessions in same room and with same trainer
+-- Same room and same trainer
 ALTER TABLE class_sessions
     ADD CONSTRAINT class_sessions_no_room_overlap EXCLUDE USING GIST (
         room_id WITH =,
         session_range WITH &&
     );
 
+-- Same trainer
 ALTER TABLE class_sessions
     ADD CONSTRAINT class_sessions_no_trainer_overlap EXCLUDE USING GIST (
         trainer_id WITH =,
         session_range WITH &&
     );
 
--- View: member dashboard summary (latest metric list, active goals, upcoming sessions count, past classes count)
+-- View for member dashboard summary
 CREATE OR REPLACE VIEW member_dashboard AS
 SELECT
   m.id AS member_id,
@@ -218,7 +216,7 @@ LEFT JOIN (
   GROUP BY cr.member_id
 ) past ON past.member_id = m.id;
 
--- Trigger function: ensure new personal_sessions fall within trainer availability
+-- Trigger function to ensure new personal_sessions is in trainer availability
 CREATE OR REPLACE FUNCTION check_personal_session_availability() RETURNS TRIGGER AS $$
 BEGIN
   -- Ensure trainer has availability that completely covers the session_range

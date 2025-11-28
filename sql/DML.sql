@@ -1,6 +1,3 @@
--- DML.sql
--- Sample data for Health and Fitness Club Management System
-
 -- Members
 INSERT INTO members (email, full_name, date_of_birth, gender, phone)
 VALUES
@@ -28,8 +25,8 @@ INSERT INTO equipment (name, room_id, status)
 VALUES ('Treadmill #1', (SELECT id FROM rooms WHERE name='Studio A'), 'operational'),
        ('Bench Press', (SELECT id FROM rooms WHERE name='Training Room 1'), 'operational');
 
--- Trainer availability (use tstzrange)
--- Tom: available tomorrow 09:00-12:00
+-- Trainer availability (w tstzrange)
+-- Tom = avail tmr 09:00-12:00
 INSERT INTO trainer_availability (trainer_id, avail_range, note)
 VALUES (
   (SELECT id FROM trainers WHERE email='tom.trainer@example.com'),
@@ -37,7 +34,7 @@ VALUES (
   'Morning block'
 );
 
--- Jane: available tomorrow 14:00-17:00
+-- Jane = avail tmr 14:00-17:00
 INSERT INTO trainer_availability (trainer_id, avail_range, note)
 VALUES (
   (SELECT id FROM trainers WHERE email='jane.trainer@example.com'),
@@ -49,7 +46,8 @@ VALUES (
 INSERT INTO classes (name, description, default_capacity)
 VALUES ('Yoga','Relaxing Vinyasa yoga',20), ('Spin','High intensity cycling',15);
 
--- Class sessions: a yoga class tomorrow 10:00-11:00 in Studio A taught by Tom
+-- Class sessions
+-- yoga class tmr 10:00-11:00 in Studio A by Tom trainer
 INSERT INTO class_sessions (class_id, trainer_id, room_id, session_range, capacity)
 VALUES (
   (SELECT id FROM classes WHERE name='Yoga'),
@@ -70,7 +68,8 @@ VALUES
 INSERT INTO fitness_goals (member_id, goal_type, target_value, units, start_date, end_date, active)
 VALUES ((SELECT id FROM members WHERE email='alice@example.com'), 'target_weight', 68.0, 'kg', now()::date - INTERVAL '30 days', now()::date + INTERVAL '60 days', TRUE);
 
--- Create an invoice for Bob and an item, then a payment (simulated)
+
+-- Create invoice for Bob and item, then payment
 INSERT INTO invoices (member_id, total_amount, status)
 VALUES ((SELECT id FROM members WHERE email='bob@example.com'), 50.00, 'open');
 
