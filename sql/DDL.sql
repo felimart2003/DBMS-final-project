@@ -1,4 +1,4 @@
--- Enable extension for exclusion constraints
+-- ext for exclusions
 CREATE EXTENSION IF NOT EXISTS btree_gist;
 
 -- Members
@@ -12,7 +12,7 @@ CREATE TABLE members (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- Trainers
+-- trainers
 CREATE TABLE trainers (
     id SERIAL PRIMARY KEY,
     email TEXT NOT NULL UNIQUE,
@@ -22,14 +22,14 @@ CREATE TABLE trainers (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- Admins
+--Admins
 CREATE TABLE admins (
     id SERIAL PRIMARY KEY,
     email TEXT NOT NULL UNIQUE,
     full_name TEXT NOT NULL
 );
 
--- Fitness goals 
+--fitness goals 
 CREATE TABLE fitness_goals (
     id SERIAL PRIMARY KEY,
     member_id INTEGER NOT NULL REFERENCES members(id) ON DELETE CASCADE,
@@ -41,7 +41,7 @@ CREATE TABLE fitness_goals (
     active BOOLEAN DEFAULT TRUE
 );
 
--- Health metrics logged w timestamp 
+-- health metrics logged w timestamp 
 CREATE TABLE health_metrics (
     id SERIAL PRIMARY KEY,
     member_id INTEGER NOT NULL REFERENCES members(id) ON DELETE CASCADE,
@@ -50,14 +50,14 @@ CREATE TABLE health_metrics (
     recorded_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- Rooms
+-- rooms
 CREATE TABLE rooms (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
     capacity INTEGER NOT NULL DEFAULT 1
 );
 
--- Equipment
+--Equipment
 CREATE TABLE equipment (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
@@ -76,7 +76,7 @@ CREATE TABLE equipment_maintenance (
     resolved_at TIMESTAMP WITH TIME ZONE
 );
 
--- Trainers availability (tstzrange for exclusion constraints for overlaps)
+-- Trainers avail (tstzrange for exclusion constraints for overlaps)
 CREATE TABLE trainer_availability (
     id SERIAL PRIMARY KEY,
     trainer_id INTEGER NOT NULL REFERENCES trainers(id) ON DELETE CASCADE,
@@ -84,7 +84,7 @@ CREATE TABLE trainer_availability (
     note TEXT
 );
 
--- Personal training sessions
+--personal training sessions
 CREATE TABLE personal_sessions (
     id SERIAL PRIMARY KEY,
     member_id INTEGER NOT NULL REFERENCES members(id) ON DELETE CASCADE,
@@ -95,7 +95,7 @@ CREATE TABLE personal_sessions (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- Classes 
+-- classes 
 CREATE TABLE classes (
     id SERIAL PRIMARY KEY,
     name TEXT NOT NULL,
@@ -114,7 +114,7 @@ CREATE TABLE class_sessions (
     status TEXT DEFAULT 'scheduled'
 );
 
--- Class registrations
+-- class registrations
 CREATE TABLE class_registrations (
     id SERIAL PRIMARY KEY,
     class_session_id INTEGER NOT NULL REFERENCES class_sessions(id) ON DELETE CASCADE,
@@ -123,7 +123,7 @@ CREATE TABLE class_registrations (
     UNIQUE (class_session_id, member_id)
 );
 
--- Invoices, items and payments
+--Invoices, items and payments
 CREATE TABLE invoices (
     id SERIAL PRIMARY KEY,
     member_id INTEGER NOT NULL REFERENCES members(id) ON DELETE CASCADE,
@@ -147,25 +147,25 @@ CREATE TABLE payments (
     paid_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- Indexs for performance
+--Indexs for performance
 CREATE INDEX idx_members_email ON members(email);
 CREATE INDEX idx_health_metrics_member_time ON health_metrics(member_id, recorded_at DESC);
 
--- Exclusion constraints to stop conflicting bookings for trainer and rooms
+--exclusion constraints to stop conflicting bookings for trainer and rooms
 ALTER TABLE personal_sessions
     ADD CONSTRAINT personal_sessions_no_trainer_overlap EXCLUDE USING GIST (
         trainer_id WITH =,
         session_range WITH &&
     );
 
--- Same trainer and same room conflict
+--same trainer and same room conflict
 ALTER TABLE personal_sessions
     ADD CONSTRAINT personal_sessions_no_room_overlap EXCLUDE USING GIST (
         room_id WITH =,
         session_range WITH &&
     );
 
--- Same room and same trainer
+--Same room and same trainer
 ALTER TABLE class_sessions
     ADD CONSTRAINT class_sessions_no_room_overlap EXCLUDE USING GIST (
         room_id WITH =,
@@ -179,7 +179,7 @@ ALTER TABLE class_sessions
         session_range WITH &&
     );
 
--- View for member dashboard summary
+-- view for member dashboard summary
 CREATE OR REPLACE VIEW member_dashboard AS
 SELECT
   m.id AS member_id,
@@ -216,10 +216,10 @@ LEFT JOIN (
   GROUP BY cr.member_id
 ) past ON past.member_id = m.id;
 
--- Trigger function to ensure new personal_sessions is in trainer availability
+-- trigger function to ensure new personal_sessions is in trainer availability
 CREATE OR REPLACE FUNCTION check_personal_session_availability() RETURNS TRIGGER AS $$
 BEGIN
-  -- Ensure trainer has availability that completely covers the session_range
+  -- trainer has avail that covers session_range
   IF NOT EXISTS (
     SELECT 1 FROM trainer_availability ta
     WHERE ta.trainer_id = NEW.trainer_id
