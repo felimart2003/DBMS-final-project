@@ -2,7 +2,9 @@
 COMP 3005 final project using a PostgreSQL-based schema and a Python demo for a Health and Fitness Club Management System. The project includes database design (DDL), sample data (DML), and operations for Members, Trainers, and Admins.
 
 # Demo video YouTube link
+### https://vimeo.com/1142303051?fl=ip&fe=ec
 
+Backup link: https://rebrand.ly/gpc22fq
 
 # File structure
 ```
